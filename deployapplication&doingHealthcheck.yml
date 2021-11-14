@@ -1,0 +1,42 @@
+
+## To deploy the application using maven but did not mention the configration file here 
+## just deploy the jar file - Downloads an Artifact from a Maven Repository
+## file is generic you need to path these values groupid - artifactid - nexus_url or jfrog_url - ansible_user_id
+## doing health check as per conversation with development to have /actuator/health to check the application is up and running.
+
+    - name: "Deployment: Retreive and Deploy Application Artifact - SystemD"
+      maven_artifact:
+        group_id: "{{ groupid }}"
+        artifact_id: "{{ artifactid }}"
+        version: "{{ version }}"
+        repository_url: "{{ nexus_url / jfrog_url }}/repository/maven-public/"
+        dest: "{{ springboot_deploy_folder }}"
+        extension: "jar"
+        state: "present"
+        timeout: 10
+        verify_checksum: always
+        validate_certs: no
+        mode: 0644
+        owner: "{{ ansible_user_id }}"
+        
+    - name: "Health Check: Waiting for {{ artifactid }} to be ready"
+      wait_for:
+        port: "{{ application_port }}"
+        host: "{{ deployment_host }}"
+        connect_timeout: 3
+        delay: 3
+        timeout: "{{ startup_timeout }}"
+      check_mode: no
+        
+    - name: "Health Check: Querying {{ artifactid }} actuator health endpoint: http://{{ deployment_host }}:{{ application_port_context }}/actuator/health"
+      uri:
+        url: "http://{{ deployment_host }}:{{ application_port_context }}/actuator/health"
+        method: GET
+        return_content: yes
+        status_code: 200
+        body_format: json
+      register: result
+      until: result.json.status == "UP"
+      retries: 5
+      delay: 3
+      check_mode: no
