@@ -28,7 +28,7 @@
         timeout: "{{ startup_timeout }}"
       check_mode: no
         
-    - name: "Health Check: Querying {{ artifactid }} actuator health endpoint: http://{{ deployment_host }}:{{ application_port_context }}/actuator/health"
+    - name: "Health Check: Querying {{ artifactid }} actuator health endpoint"
       uri:
         url: "http://{{ deployment_host }}:{{ application_port_context }}/actuator/health"
         method: GET
