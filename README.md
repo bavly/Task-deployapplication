@@ -1,6 +1,8 @@
 # Task-deployapplication
 
 Instructions
+
+
 Use Ubuntu Linux as a host system and complete these tasks:
 • Using Vagrant and Docker, write a Vagrant file to initialize a Docker container.
 • Write a Docker file to install necessary packages and exposes SSH and application interfaces.
