@@ -4,6 +4,18 @@
 ## file is generic you need to path these values groupid - artifactid - nexus_url or jfrog_url - ansible_user_id
 ## doing health check as per conversation with development to have /actuator/health to check the application is up and running.
 
+    - name: "Pre Deployment Checks: Ensure Java binary is present"
+      file:
+        path: "{{ java_dir }}/bin/java"
+        state: file
+    
+    - name: "Pre Deployment Checks: Verify Java Version"
+      command: "{{ java_dir }}/bin/java -version"
+      register: java_version
+
+    - debug: msg="{{ java_version.stderr }}"
+      ignore_errors: True
+
     - name: "Deployment: Retreive and Deploy Application Artifact - SystemD"
       maven_artifact:
         group_id: "{{ groupid }}"
@@ -19,6 +31,13 @@
         mode: 0644
         owner: "{{ ansible_user_id }}"
         
+    - name: "Startup: Restart application - SystemD"
+      systemd:
+        name: "{{ artifactid }}"
+        enabled: yes
+        daemon-reload: yes
+        state: restarted
+
     - name: "Health Check: Waiting for {{ artifactid }} to be ready"
       wait_for:
         port: "{{ application_port }}"
@@ -27,7 +46,7 @@
         delay: 3
         timeout: "{{ startup_timeout }}"
       check_mode: no
-        
+    
     - name: "Health Check: Querying {{ artifactid }} actuator health endpoint"
       uri:
         url: "http://{{ deployment_host }}:{{ application_port_context }}/actuator/health"
@@ -37,6 +56,7 @@
         body_format: json
       register: result
       until: result.json.status == "UP"
+      failed_when: result.status not in [200]
       retries: 5
       delay: 3
       check_mode: no
