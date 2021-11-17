@@ -8,8 +8,8 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 
 RUN mkdir /opt/tomcat/<application-name>
 RUN apt-get -y install java
-RUN apt-get -y -version
+RUN apt-get -y java-version
 
 WORKDIR /opt/tomcat/webapps
-RUN curl -O -L "{{ nexus_url / jfrog_url }}/repository/maven-public/"
+RUN curl -O -L -e url='http://my-nexus-server.com:8081/repository/maven-public/' "
 
